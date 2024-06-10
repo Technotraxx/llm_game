@@ -31,7 +31,16 @@ def configure_api_key():
 
 def start_encounter():
     user_prompt = get_encounter_prompt(st.session_state.character['Level'])
-    
+
+    cache_key = f"encounter_{user_prompt}"
+    if cache_key in cache:
+        st.session_state.encounter_description = cache[cache_key]
+        st.session_state.chat_history = [
+            {"role": "user", "parts": [user_prompt]},
+            {"role": "model", "parts": [cache[cache_key]]}
+        ]
+        return
+
     gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
                                    generation_config=generation_config,
                                    system_instruction=system_prompt_encounter)
@@ -40,13 +49,14 @@ def start_encounter():
         {"role": "user", "parts": [user_prompt]}
     ])
     response = chat_session.send_message(user_prompt)
-    
+
     if response.text:
         st.session_state.encounter_description = response.text
         st.session_state.chat_history = [
             {"role": "user", "parts": [user_prompt]},
             {"role": "model", "parts": [response.text]}
         ]
+        cache[cache_key] = response.text
     else:
         st.session_state.encounter_description = "No output from Gemini."
 
@@ -55,18 +65,26 @@ def handle_player_action():
         player_action = st.session_state.selected_option
         user_message = f"Der Spieler hat sich entschieden für {player_action}"
 
+        cache_key = f"response_{user_message}"
+        if cache_key in cache:
+            st.session_state.response_text = cache[cache_key]
+            st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
+            st.session_state.chat_history.append({"role": "model", "parts": [cache[cache_key]]})
+            return
+
         st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
-        
+
         gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
                                        generation_config=generation_config,
                                        system_instruction=system_prompt_action)
         chat_session = gemini.start_chat(history=st.session_state.chat_history)
         response = chat_session.send_message(user_message)
-        
+
         if response.text:
             st.session_state.response_text = response.text
             st.session_state.chat_history.append({"role": "model", "parts": [response.text]})
+            cache[cache_key] = response.text
         else:
             st.session_state.response_text = "No output from Gemini."
-        
+
         st.session_state.selected_option = ""
