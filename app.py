@@ -69,7 +69,8 @@ def main():
             }
         ])
 
-        response = chat_session.send_message("")
+        # Sende eine initiale Nachricht, um die Chat-Sitzung zu starten
+        response = chat_session.send_message(user_prompt)
 
         if response.text:
             st.session_state.encounter_description = response.text
