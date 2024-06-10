@@ -1,6 +1,7 @@
-import google.generativeai as genai
 import streamlit as st
+import google.generativeai as genai
 import json
+import diskcache as dc
 from config import generation_config
 
 # Funktion zur Initialisierung des Session State
@@ -71,14 +72,24 @@ def main():
 
         prompt_parts = [prompt]
 
-        try:
-            response = gemini.generate_content(prompt_parts)
-            st.subheader("Ergebnis:")
-            if response.text:
-                st.write(response.text)
-            else:
-                st.write("No output from Gemini.")
-        except Exception as e:
-            st.write(f"An error occurred: {str(e)}")
+        cache = dc.Cache('cache_dir')  # Verwenden des diskcache
+        cache_key = f"response_{option}"
+
+        if cache_key in cache:
+            response_text = cache[cache_key]
+            st.write("Verwende zwischengespeicherte Antwort")
+        else:
+            try:
+                response = gemini.generate_content(prompt_parts)
+                if response.text:
+                    response_text = response.text
+                    cache[cache_key] = response_text  # Antwort zwischenspeichern
+                else:
+                    response_text = "No output from Gemini."
+            except Exception as e:
+                response_text = f"An error occurred: {str(e)}"
+
+        st.subheader("Ergebnis:")
+        st.write(response_text)
 
 main()
