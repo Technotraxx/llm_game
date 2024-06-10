@@ -1,8 +1,9 @@
-import streamlit as st
 import google.generativeai as genai
+import streamlit as st
 import json
 import diskcache as dc
 from config import generation_config
+from prompts import get_encounter_prompt
 
 # Funktion zur Initialisierung des Session State
 def initialize_session_state():
@@ -17,6 +18,8 @@ def initialize_session_state():
         }
     if 'api_key' not in st.session_state:
         st.session_state.api_key = None
+    if 'encounter_description' not in st.session_state:
+        st.session_state.encounter_description = ""
 
 # Haupt-Streamlit-App
 def main():
@@ -50,10 +53,41 @@ def main():
     st.sidebar.text(f"Erfahrung: {st.session_state.character['Erfahrung']}")
     st.sidebar.text(f"Gold: {st.session_state.character['Gold']}")
 
+    # Button zum Starten des Spiels
+    if st.button("Spiel starten"):
+        prompt = get_encounter_prompt()
+
+        gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
+                                       generation_config=generation_config,
+                                       safety_settings=safety_settings)
+
+        prompt_parts = [prompt]
+
+        cache = dc.Cache('cache_dir')  # Verwenden des diskcache
+        cache_key = "encounter_description"
+
+        if cache_key in cache:
+            encounter_description = cache[cache_key]
+            st.write("Verwende zwischengespeicherte Antwort")
+        else:
+            try:
+                response = gemini.generate_content(prompt_parts)
+                if response.text:
+                    encounter_description = response.text
+                    cache[cache_key] = encounter_description  # Antwort zwischengespeichern
+                else:
+                    encounter_description = "No output from Gemini."
+            except Exception as e:
+                encounter_description = f"An error occurred: {str(e)}"
+
+        st.session_state.encounter_description = encounter_description
+
     # Beispiel-Encounter
     st.subheader("Begegnung")
-    encounter_description = "Du stehst vor einem alten, verwitterten Tempel. Die Luft ist kühl und eine mystische Aura umgibt den Ort."
-    st.write(encounter_description)
+    if st.session_state.encounter_description:
+        st.write(st.session_state.encounter_description)
+    else:
+        st.write("Drücke den 'Spiel starten' Button, um ein neues Encounter zu generieren.")
 
     # Optionen für den Spieler
     option = st.selectbox(
@@ -72,7 +106,6 @@ def main():
 
         prompt_parts = [prompt]
 
-        cache = dc.Cache('cache_dir')  # Verwenden des diskcache
         cache_key = f"response_{option}"
 
         if cache_key in cache:
@@ -83,7 +116,7 @@ def main():
                 response = gemini.generate_content(prompt_parts)
                 if response.text:
                     response_text = response.text
-                    cache[cache_key] = response_text  # Antwort zwischenspeichern
+                    cache[cache_key] = response_text  # Antwort zwischengespeichern
                 else:
                     response_text = "No output from Gemini."
             except Exception as e:
