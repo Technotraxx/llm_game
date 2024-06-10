@@ -1,143 +1,30 @@
-import google.generativeai as genai
 import streamlit as st
-import json
-import diskcache as dc
-from config import generation_config
-from prompts import system_prompt, get_encounter_prompt
+from character import initialize_character, display_character
+from game_logic import initialize_game_state, configure_api_key, start_encounter
+from ui import display_encounter, display_response
 
-# Funktion zur Initialisierung des Session State
-def initialize_session_state():
-    if 'character' not in st.session_state:
-        st.session_state.character = {
-            'Name': 'Abenteurer',
-            'Level': 1,
-            'Gesundheit': 100,
-            'Mana': 50,
-            'Erfahrung': 0,
-            'Gold': 10
-        }
-    if 'api_key' not in st.session_state:
-        st.session_state.api_key = None
-    if 'encounter_description' not in st.session_state:
-        st.session_state.encounter_description = ""
-    if 'selected_option' not in st.session_state:
-        st.session_state.selected_option = ""
-    if 'chat_history' not in st.session_state:
-        st.session_state.chat_history = []
-    if 'response_text' not in st.session_state:
-        st.session_state.response_text = ""
-
-# Haupt-Streamlit-App
 def main():
     st.title("Rundenbasiertes Rollenspiel")
 
-    # Initialisierung des Session State
-    initialize_session_state()
+    # Initialisierungen
+    initialize_character()
+    initialize_game_state()
 
-    # API-Schlüssel in der Sidebar konfigurieren
-    api_key = st.sidebar.text_input("Enter your API key:", value=st.session_state.api_key)
+    # API-Schlüssel konfigurieren
+    configure_api_key()
 
-    # Überprüfen, ob der API-Schlüssel angegeben ist
-    if not api_key:
-        st.sidebar.error("Please enter your API key.")
-        st.stop()
-    else:
-        # API-Schlüssel im Session State speichern
-        st.session_state.api_key = api_key
-
-    genai.configure(api_key=api_key)
-
-    safety_settings = "{}"
-    safety_settings = json.loads(safety_settings)
-
-    # Charakter in der Sidebar anzeigen
-    st.sidebar.title("Charakter")
-    st.sidebar.text(f"Name: {st.session_state.character['Name']}")
-    st.sidebar.text(f"Level: {st.session_state.character['Level']}")
-    st.sidebar.text(f"Gesundheit: {st.session_state.character['Gesundheit']}")
-    st.sidebar.text(f"Mana: {st.session_state.character['Mana']}")
-    st.sidebar.text(f"Erfahrung: {st.session_state.character['Erfahrung']}")
-    st.sidebar.text(f"Gold: {st.session_state.character['Gold']}")
+    # Charakter anzeigen
+    display_character()
 
     # Button zum Starten des Spiels
     if st.button("Spiel starten"):
-        user_prompt = get_encounter_prompt(st.session_state.character['Level'])
+        start_encounter()
 
-        gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
-                                       generation_config=generation_config,
-                                       system_instruction=system_prompt,
-                                       safety_settings=safety_settings)
+    # Encounter anzeigen
+    display_encounter()
 
-        chat_session = gemini.start_chat(history=[
-            {
-                "role": "user",
-                "parts": [user_prompt],
-            }
-        ])
+    # Reaktion auf die Spielerwahl anzeigen
+    display_response()
 
-        # Sende eine initiale Nachricht, um die Chat-Sitzung zu starten
-        response = chat_session.send_message(user_prompt)
-
-        if response.text:
-            st.session_state.encounter_description = response.text
-            st.session_state.chat_history = [
-                {"role": "user", "parts": [user_prompt]},
-                {"role": "model", "parts": [response.text]}
-            ]
-        else:
-            st.session_state.encounter_description = "No output from Gemini."
-
-    # Beispiel-Encounter
-    st.subheader("Begegnung")
-    if st.session_state.encounter_description:
-        st.write(st.session_state.encounter_description)
-
-        # Optionen für den Spieler anzeigen, nachdem der Encounter generiert wurde
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("Kampf"):
-                st.session_state.selected_option = "Kampf"
-        with col2:
-            if st.button("Hilfe leisten"):
-                st.session_state.selected_option = "Hilfe leisten"
-        with col3:
-            if st.button("Verhandeln"):
-                st.session_state.selected_option = "Verhandeln"
-
-        # Verarbeiten der Spielerwahl
-        if st.session_state.selected_option:
-            player_action = st.session_state.selected_option
-            user_message = f"Der Spieler hat sich entschieden für {player_action}"
-
-            new_system_prompt = """
-            Reagiere auf die Aktion des Spielers und beschreibe die Konsequenzen der Wahl. 
-            """
-
-            # Aktualisieren der Chat-Historie mit der neuen User-Nachricht
-            st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
-
-            gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
-                                           generation_config=generation_config,
-                                           system_instruction=new_system_prompt,
-                                           safety_settings=safety_settings)
-
-            # Starten der Chat-Sitzung mit der gesamten Chat-Historie
-            chat_session = gemini.start_chat(history=st.session_state.chat_history)
-
-            response = chat_session.send_message(user_message)
-
-            if response.text:
-                st.session_state.response_text = response.text
-                st.session_state.chat_history.append({"role": "model", "parts": [response.text]})
-            else:
-                st.session_state.response_text = "No output from Gemini."
-
-            # Zurücksetzen der ausgewählten Option
-            st.session_state.selected_option = ""
-
-    # Anzeige der Reaktion auf die Spielerwahl
-    if st.session_state.response_text:
-        st.subheader("Reaktion:")
-        st.write(st.session_state.response_text)
-
-main()
+if __name__ == "__main__":
+    main()
