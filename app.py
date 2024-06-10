@@ -1,6 +1,7 @@
 import google.generativeai as genai
 import streamlit as st
 import json
+from config import generation_config
 
 # Funktion zur Initialisierung des Session State
 def initialize_session_state():
@@ -35,19 +36,6 @@ def main():
         st.session_state.api_key = api_key
 
     genai.configure(api_key=api_key)
-
-    # Einstellungen für das Modell konfigurieren
-    temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.9, 0.1)
-    top_p = st.sidebar.number_input("Top P", 0.0, 1.0, 1.0, 0.1)
-    top_k = st.sidebar.number_input("Top K", 1, 100, 1)
-    max_output_tokens = st.sidebar.number_input("Max Output Tokens", 1, 10000, 2048)
-
-    generation_config = {
-        "temperature": temperature,
-        "top_p": top_p,
-        "top_k": top_k,
-        "max_output_tokens": max_output_tokens,
-    }
 
     safety_settings = "{}"
     safety_settings = json.loads(safety_settings)
