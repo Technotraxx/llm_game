@@ -24,6 +24,8 @@ def initialize_session_state():
         st.session_state.selected_option = ""
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
+    if 'response_text' not in st.session_state:
+        st.session_state.response_text = ""
 
 # Haupt-Streamlit-App
 def main():
@@ -89,54 +91,53 @@ def main():
     st.subheader("Begegnung")
     if st.session_state.encounter_description:
         st.write(st.session_state.encounter_description)
-    else:
-        st.write("Drücke den 'Spiel starten' Button, um ein neues Encounter zu generieren.")
 
-    # Optionen für den Spieler
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("Kampf"):
-            st.session_state.selected_option = "Kampf"
-    with col2:
-        if st.button("Hilfe leisten"):
-            st.session_state.selected_option = "Hilfe leisten"
-    with col3:
-        if st.button("Verhandeln"):
-            st.session_state.selected_option = "Verhandeln"
+        # Optionen für den Spieler anzeigen, nachdem der Encounter generiert wurde
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("Kampf"):
+                st.session_state.selected_option = "Kampf"
+        with col2:
+            if st.button("Hilfe leisten"):
+                st.session_state.selected_option = "Hilfe leisten"
+        with col3:
+            if st.button("Verhandeln"):
+                st.session_state.selected_option = "Verhandeln"
 
-    # Verarbeiten der Spielerwahl
-    if st.session_state.selected_option:
-        player_action = st.session_state.selected_option
-        user_message = f"Der Spieler hat sich entschieden für {player_action}"
+        # Verarbeiten der Spielerwahl
+        if st.session_state.selected_option:
+            player_action = st.session_state.selected_option
+            user_message = f"Der Spieler hat sich entschieden für {player_action}"
 
-        new_system_prompt = """
-        Reagiere auf die Aktion des Spielers und beschreibe die Konsequenzen der Wahl. 
-        """
+            new_system_prompt = """
+            Reagiere auf die Aktion des Spielers und beschreibe die Konsequenzen der Wahl. 
+            """
 
-        # Aktualisieren der Chat-Historie mit der neuen User-Nachricht
-        st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
+            # Aktualisieren der Chat-Historie mit der neuen User-Nachricht
+            st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
 
-        gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
-                                       generation_config=generation_config,
-                                       system_instruction=new_system_prompt,
-                                       safety_settings=safety_settings)
+            gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
+                                           generation_config=generation_config,
+                                           system_instruction=new_system_prompt,
+                                           safety_settings=safety_settings)
 
-        # Starten der Chat-Sitzung mit der gesamten Chat-Historie
-        chat_session = gemini.start_chat(history=st.session_state.chat_history)
+            # Starten der Chat-Sitzung mit der gesamten Chat-Historie
+            chat_session = gemini.start_chat(history=st.session_state.chat_history)
 
-        response = chat_session.send_message(user_message)
+            response = chat_session.send_message(user_message)
 
-        if response.text:
-            st.session_state.encounter_description = response.text
-            st.session_state.chat_history.append({"role": "model", "parts": [response.text]})
-        else:
-            st.session_state.encounter_description = "No output from Gemini."
+            if response.text:
+                st.session_state.response_text = response.text
+                st.session_state.chat_history.append({"role": "model", "parts": [response.text]})
+            else:
+                st.session_state.response_text = "No output from Gemini."
 
-        # Zurücksetzen der ausgewählten Option
-        st.session_state.selected_option = ""
+            # Zurücksetzen der ausgewählten Option
+            st.session_state.selected_option = ""
 
-    # Anzeige der gewählten Option (zu Debugging-Zwecken)
-    if st.session_state.selected_option:
-        st.write(f"Gewählte Option: {st.session_state.selected_option}")
+    # Anzeige der Reaktion auf die Spielerwahl
+    if st.session_state.response_text:
+        st.subheader("Reaktion:")
+        st.write(st.session_state.response_text)
 
 main()
