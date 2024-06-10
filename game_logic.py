@@ -4,7 +4,7 @@ import google.generativeai as genai
 import diskcache as dc
 import streamlit as st
 from config import generation_config
-from prompts import system_prompt_encounter, system_prompt_action
+from prompts import system_prompt_encounter, system_prompt_action, get_encounter_prompt
 
 cache = dc.Cache("cache_dir")
 
