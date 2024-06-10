@@ -20,6 +20,8 @@ def initialize_session_state():
         st.session_state.api_key = None
     if 'encounter_description' not in st.session_state:
         st.session_state.encounter_description = ""
+    if 'selected_option' not in st.session_state:
+        st.session_state.selected_option = ""
 
 # Haupt-Streamlit-App
 def main():
@@ -85,39 +87,19 @@ def main():
         st.write("Drücke den 'Spiel starten' Button, um ein neues Encounter zu generieren.")
 
     # Optionen für den Spieler
-    option = st.selectbox(
-        "Wie möchtest du vorgehen?",
-        ["Betrete den Tempel", "Untersuche die Umgebung", "Weitergehen"]
-    )
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("Kampf"):
+            st.session_state.selected_option = "Kampf"
+    with col2:
+        if st.button("Hilfe leisten"):
+            st.session_state.selected_option = "Hilfe leisten"
+    with col3:
+        if st.button("Verhandeln"):
+            st.session_state.selected_option = "Verhandeln"
 
-    # Reaktion auf die gewählte Option
-    if st.button("Bestätigen"):
-        st.write(f"Du hast die Option '{option}' gewählt.")
-        prompt = f"Spieler hat die Option '{option}' gewählt. Was passiert als nächstes?"
-
-        gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
-                                       generation_config=generation_config,
-                                       safety_settings=safety_settings)
-
-        prompt_parts = [prompt]
-
-        cache_key = f"response_{option}"
-
-        if cache_key in cache:
-            response_text = cache[cache_key]
-            st.write("Verwende zwischengespeicherte Antwort")
-        else:
-            try:
-                response = gemini.generate_content(prompt_parts)
-                if response.text:
-                    response_text = response.text
-                    cache[cache_key] = response_text  # Antwort zwischengespeichern
-                else:
-                    response_text = "No output from Gemini."
-            except Exception as e:
-                response_text = f"An error occurred: {str(e)}"
-
-        st.subheader("Ergebnis:")
-        st.write(response_text)
+    # Anzeige der gewählten Option (zu Debugging-Zwecken)
+    if st.session_state.selected_option:
+        st.write(f"Gewählte Option: {st.session_state.selected_option}")
 
 main()
