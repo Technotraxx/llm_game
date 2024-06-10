@@ -3,7 +3,7 @@ import streamlit as st
 import json
 import diskcache as dc
 from config import generation_config
-from prompts import get_encounter_prompt
+from prompts import SYSTEM_PROMPT, get_encounter_prompt
 
 # Funktion zur Initialisierung des Session State
 def initialize_session_state():
@@ -55,32 +55,27 @@ def main():
 
     # Button zum Starten des Spiels
     if st.button("Spiel starten"):
-        prompt = get_encounter_prompt()
+        system_prompt = SYSTEM_PROMPT
+        user_prompt = get_encounter_prompt(st.session_state.character['Level'])
 
         gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
                                        generation_config=generation_config,
+                                       system_instruction=system_prompt,
                                        safety_settings=safety_settings)
 
-        prompt_parts = [prompt]
+        chat_session = gemini.start_chat(history=[
+            {
+                "role": "user",
+                "parts": [user_prompt],
+            }
+        ])
 
-        cache = dc.Cache('cache_dir')  # Verwenden des diskcache
-        cache_key = "encounter_description"
+        response = chat_session.send_message("")
 
-        if cache_key in cache:
-            encounter_description = cache[cache_key]
-            st.write("Verwende zwischengespeicherte Antwort")
+        if response.text:
+            st.session_state.encounter_description = response.text
         else:
-            try:
-                response = gemini.generate_content(prompt_parts)
-                if response.text:
-                    encounter_description = response.text
-                    cache[cache_key] = encounter_description  # Antwort zwischengespeichern
-                else:
-                    encounter_description = "No output from Gemini."
-            except Exception as e:
-                encounter_description = f"An error occurred: {str(e)}"
-
-        st.session_state.encounter_description = encounter_description
+            st.session_state.encounter_description = "No output from Gemini."
 
     # Beispiel-Encounter
     st.subheader("Begegnung")
