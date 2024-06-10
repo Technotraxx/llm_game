@@ -121,6 +121,7 @@ def main():
                                        system_instruction=new_system_prompt,
                                        safety_settings=safety_settings)
 
+        # Starten der Chat-Sitzung mit der gesamten Chat-Historie
         chat_session = gemini.start_chat(history=st.session_state.chat_history)
 
         response = chat_session.send_message(user_message)
