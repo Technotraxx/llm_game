@@ -22,6 +22,8 @@ def initialize_session_state():
         st.session_state.encounter_description = ""
     if 'selected_option' not in st.session_state:
         st.session_state.selected_option = ""
+    if 'chat_history' not in st.session_state:
+        st.session_state.chat_history = []
 
 # Haupt-Streamlit-App
 def main():
@@ -76,6 +78,10 @@ def main():
 
         if response.text:
             st.session_state.encounter_description = response.text
+            st.session_state.chat_history = [
+                {"role": "user", "parts": [user_prompt]},
+                {"role": "model", "parts": [response.text]}
+            ]
         else:
             st.session_state.encounter_description = "No output from Gemini."
 
@@ -97,6 +103,36 @@ def main():
     with col3:
         if st.button("Verhandeln"):
             st.session_state.selected_option = "Verhandeln"
+
+    # Verarbeiten der Spielerwahl
+    if st.session_state.selected_option:
+        player_action = st.session_state.selected_option
+        user_message = f"Der Spieler hat sich entschieden für {player_action}"
+
+        new_system_prompt = """
+        Reagiere auf die Aktion des Spielers und beschreibe die Konsequenzen der Wahl. 
+        """
+
+        # Aktualisieren der Chat-Historie mit der neuen User-Nachricht
+        st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
+
+        gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
+                                       generation_config=generation_config,
+                                       system_instruction=new_system_prompt,
+                                       safety_settings=safety_settings)
+
+        chat_session = gemini.start_chat(history=st.session_state.chat_history)
+
+        response = chat_session.send_message(user_message)
+
+        if response.text:
+            st.session_state.encounter_description = response.text
+            st.session_state.chat_history.append({"role": "model", "parts": [response.text]})
+        else:
+            st.session_state.encounter_description = "No output from Gemini."
+
+        # Zurücksetzen der ausgewählten Option
+        st.session_state.selected_option = ""
 
     # Anzeige der gewählten Option (zu Debugging-Zwecken)
     if st.session_state.selected_option:
