@@ -3,7 +3,7 @@ import streamlit as st
 import json
 import diskcache as dc
 from config import generation_config
-from prompts import SYSTEM_PROMPT, get_encounter_prompt
+from prompts import system_prompt, get_encounter_prompt
 
 # Funktion zur Initialisierung des Session State
 def initialize_session_state():
@@ -55,7 +55,6 @@ def main():
 
     # Button zum Starten des Spiels
     if st.button("Spiel starten"):
-        system_prompt = SYSTEM_PROMPT
         user_prompt = get_encounter_prompt(st.session_state.character['Level'])
 
         gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
