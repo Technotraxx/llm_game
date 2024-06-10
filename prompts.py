@@ -1,6 +1,6 @@
 # prompts.py
 
-SYSTEM_PROMPT = """
+system_prompt = """
 Beschreibe ein zufälliges Encounter in einem Fantasy-Rollenspiel.
 
 Der Encounter soll herausfordernd, aber schaffbar sein. Daher berücksichtige die Informationen über den Spieler, über sein aktuelles Level, seine Fähigkeiten, Stärken und Schwächen und Ausrüstung. Berücksichtige die 3 Standard-Reaktionsmöglichkeiten. Der Encounter muss immer so geschaffen sein, dass alle drei Optionen zumindest möglich sein können. Es ist aber okay, dass für einen Encounter Kampf die leichtere Option wäre, während eine friedliche Alternative für einen anderen Encounter besser funktionieren würde.
