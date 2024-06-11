@@ -30,3 +30,8 @@ def display_response():
     if st.session_state.response_text:
         st.subheader("Reaktion:")
         st.write(st.session_state.response_text)
+
+    if st.session_state.selected_option == "Kampf" and st.session_state.random_events:
+        st.subheader("Zufällige Ereignisse:")
+        for event, occurred in st.session_state.random_events.items():
+            st.write(f"{event}: {'Ja' wenn occurred sonst 'Nein'}")
