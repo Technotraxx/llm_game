@@ -28,7 +28,7 @@ def initialize_game_state():
 def log_debug_message(message):
     st.session_state.debug_log += f"{message}\n"
     # Sofortiges Aktualisieren des Logs
-    st.experimental_rerun()
+    st.rerun()
 
 def configure_api_key():
     api_key = st.sidebar.text_input("Enter your API key:", value=st.session_state.api_key)
