@@ -39,4 +39,3 @@ def display_response():
 def display_debug_log():
     st.sidebar.subheader("Debug Log")
     st.sidebar.text_area("Log", st.session_state.debug_log, height=300)
-``
