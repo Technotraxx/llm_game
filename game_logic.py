@@ -5,6 +5,7 @@ import diskcache as dc
 import streamlit as st
 from config import generation_config
 from prompts import system_prompt_encounter, system_prompt_action, get_encounter_prompt
+from mechanics import calculate_random_events
 
 cache = dc.Cache("cache_dir")
 
@@ -19,6 +20,8 @@ def initialize_game_state():
         st.session_state.chat_history = []
     if 'response_text' not in st.session_state:
         st.session_state.response_text = ""
+    if 'random_events' not in st.session_state:
+        st.session_state.random_events = {}
 
 def configure_api_key():
     api_key = st.sidebar.text_input("Enter your API key:", value=st.session_state.api_key)
@@ -73,6 +76,9 @@ def handle_player_action():
             return
 
         st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
+
+        if player_action == "Kampf":
+            st.session_state.random_events = calculate_random_events()
 
         gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
                                        generation_config=generation_config,
