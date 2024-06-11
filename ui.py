@@ -13,18 +13,19 @@ def display_encounter():
         st.write("Drücke den 'Spiel starten' Button, um ein neues Encounter zu generieren.")
 
 def display_action_buttons():
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("Kampf"):
-            st.session_state.selected_option = "Kampf"
-    with col2:
-        if st.button("Hilfe leisten"):
-            st.session_state.selected_option = "Hilfe leisten"
-    with col3:
-        if st.button("Verhandeln"):
-            st.session_state.selected_option = "Verhandeln"
+    if st.session_state.encounter_options:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button(st.session_state.encounter_options[0]):
+                st.session_state.selected_option = st.session_state.encounter_options[0]
+        with col2:
+            if st.button(st.session_state.encounter_options[1]):
+                st.session_state.selected_option = st.session_state.encounter_options[1]
+        with col3:
+            if st.button(st.session_state.encounter_options[2]):
+                st.session_state.selected_option = st.session_state.encounter_options[2]
     
-    handle_player_action()
+        handle_player_action()
 
 def display_response():
     if st.session_state.response_text:
