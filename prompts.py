@@ -24,5 +24,14 @@ system_prompt_action = """
 Reagiere auf die Aktion des Spielers und beschreibe die Konsequenzen der Wahl. 
 """
 
+random_events_prompt = """
+Die Aktion des Helden hat die folgenden zufälligen Ereignisse ausgelöst. Beziehe sie in deine Antwort ein.
+
+Wenn Fehlschlag: Ja --> mache die Situation dramatischer. Es wird für den Helden nun schwieriger die Situation zu lösen. Die Logik dafür übernimmt aber das Spiel. Du musst nur das Szenario beschreiben.
+Wenn Überraschung: Ja --> mache die Situation interessanter und ungewöhnlicher. Es sollte eine interessante Wendung sein. Nichts allzu schlimmes. Die Logik dafür übernimmt aber das Spiel. Du musst nur das Szenario beschreiben.
+Wenn Glück: Ja --> mache die Situation deutlich leichter und angenehmer für den Helden. Die Logik dafür übernimmt aber das Spiel. Du musst nur das Szenario beschreiben.
+Wenn Erfahrung: Ja gib keine Werteveränderung in deiner Antwort an. Baue es nur in den Text ein, dass der Held durch seine Aktion einen Erfahrungs-Bonus erhalten hat. Es soll sich natürlich lesen. Die Logik dafür übernimmt aber das Spiel. Du musst nur das Szenario beschreiben.
+"""
+
 def get_encounter_prompt(level):
-    return f"Ein Level {level} Held beginnt sein Abenteuer."
+    return f"Ein Level Held mit dem Level {level} beginnt sein Abenteuer."
