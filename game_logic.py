@@ -88,8 +88,9 @@ def handle_player_action():
 
         st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
 
+        # Berechnung der zufälligen Ereignisse
         st.session_state.random_events = calculate_random_events(player_action)
-        log_debug_message("Zufällige Ereignisse berechnet.")
+        log_debug_message("Zufällige Ereignisse berechnet:")
         for event, occurred in st.session_state.random_events.items():
             log_debug_message(f"{event}: {'Ja' if occurred else 'Nein'}")
 
