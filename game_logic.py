@@ -3,6 +3,7 @@
 import google.generativeai as genai
 import diskcache as dc
 import streamlit as st
+import json
 from config import generation_config
 from prompts import system_prompt_encounter, system_prompt_action, get_encounter_prompt
 from mechanics import calculate_random_events
@@ -14,6 +15,8 @@ def initialize_game_state():
         st.session_state.api_key = None
     if 'encounter_description' not in st.session_state:
         st.session_state.encounter_description = ""
+    if 'encounter_options' not in st.session_state:
+        st.session_state.encounter_options = []
     if 'selected_option' not in st.session_state:
         st.session_state.selected_option = ""
     if 'chat_history' not in st.session_state:
@@ -27,6 +30,8 @@ def initialize_game_state():
 
 def log_debug_message(message):
     st.session_state.debug_log += f"{message}\n"
+    # Sofortiges Aktualisieren des Logs
+    st.experimental_rerun()
 
 def configure_api_key():
     api_key = st.sidebar.text_input("Enter your API key:", value=st.session_state.api_key)
@@ -42,10 +47,12 @@ def start_encounter():
 
     cache_key = f"encounter_{user_prompt}"
     if cache_key in cache:
-        st.session_state.encounter_description = cache[cache_key]
+        encounter = cache[cache_key]
+        st.session_state.encounter_description = encounter["description"]
+        st.session_state.encounter_options = encounter["options"]
         st.session_state.chat_history = [
             {"role": "user", "parts": [user_prompt]},
-            {"role": "model", "parts": [cache[cache_key]]}
+            {"role": "model", "parts": [json.dumps(encounter)]}
         ]
         log_debug_message("Encounter aus dem Cache geladen.")
         return
@@ -60,13 +67,19 @@ def start_encounter():
     response = chat_session.send_message(user_prompt)
 
     if response.text:
-        st.session_state.encounter_description = response.text
-        st.session_state.chat_history = [
-            {"role": "user", "parts": [user_prompt]},
-            {"role": "model", "parts": [response.text]}
-        ]
-        cache[cache_key] = response.text
-        log_debug_message("Neues Encounter generiert.")
+        try:
+            encounter = json.loads(response.text)
+            st.session_state.encounter_description = encounter["description"]
+            st.session_state.encounter_options = encounter["options"]
+            st.session_state.chat_history = [
+                {"role": "user", "parts": [user_prompt]},
+                {"role": "model", "parts": [response.text]}
+            ]
+            cache[cache_key] = encounter
+            log_debug_message("Neues Encounter generiert.")
+        except json.JSONDecodeError:
+            st.session_state.encounter_description = "Fehler beim Parsen der JSON-Antwort."
+            log_debug_message("Fehler beim Parsen der JSON-Antwort.")
     else:
         st.session_state.encounter_description = "No output from Gemini."
         log_debug_message("Fehler beim Generieren des Encounters.")
@@ -78,9 +91,10 @@ def handle_player_action():
 
         cache_key = f"response_{user_message}"
         if cache_key in cache:
-            st.session_state.response_text = cache[cache_key]
+            response = cache[cache_key]
+            st.session_state.response_text = response["result"]
             st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
-            st.session_state.chat_history.append({"role": "model", "parts": [cache[cache_key]]})
+            st.session_state.chat_history.append({"role": "model", "parts": [json.dumps(response)]})
             log_debug_message(f"Antwort aus dem Cache geladen für Aktion: {player_action}")
             return
 
@@ -99,10 +113,15 @@ def handle_player_action():
         response = chat_session.send_message(user_message)
 
         if response.text:
-            st.session_state.response_text = response.text
-            st.session_state.chat_history.append({"role": "model", "parts": [response.text]})
-            cache[cache_key] = response.text
-            log_debug_message("Antwort von Gemini erhalten.")
+            try:
+                result = json.loads(response.text)
+                st.session_state.response_text = result["result"]
+                st.session_state.chat_history.append({"role": "model", "parts": [response.text]})
+                cache[cache_key] = result
+                log_debug_message("Antwort von Gemini erhalten.")
+            except json.JSONDecodeError:
+                st.session_state.response_text = "Fehler beim Parsen der JSON-Antwort."
+                log_debug_message("Fehler beim Parsen der JSON-Antwort.")
         else:
             st.session_state.response_text = "No output from Gemini."
             log_debug_message("Fehler beim Empfangen der Antwort von Gemini.")
