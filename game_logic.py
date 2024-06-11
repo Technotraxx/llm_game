@@ -22,6 +22,11 @@ def initialize_game_state():
         st.session_state.response_text = ""
     if 'random_events' not in st.session_state:
         st.session_state.random_events = {}
+    if 'debug_log' not in st.session_state:
+        st.session_state.debug_log = ""
+
+def log_debug_message(message):
+    st.session_state.debug_log += f"{message}\n"
 
 def configure_api_key():
     api_key = st.sidebar.text_input("Enter your API key:", value=st.session_state.api_key)
@@ -42,6 +47,7 @@ def start_encounter():
             {"role": "user", "parts": [user_prompt]},
             {"role": "model", "parts": [cache[cache_key]]}
         ]
+        log_debug_message("Encounter aus dem Cache geladen.")
         return
 
     gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
@@ -60,8 +66,10 @@ def start_encounter():
             {"role": "model", "parts": [response.text]}
         ]
         cache[cache_key] = response.text
+        log_debug_message("Neues Encounter generiert.")
     else:
         st.session_state.encounter_description = "No output from Gemini."
+        log_debug_message("Fehler beim Generieren des Encounters.")
 
 def handle_player_action():
     if st.session_state.selected_option:
@@ -73,14 +81,16 @@ def handle_player_action():
             st.session_state.response_text = cache[cache_key]
             st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
             st.session_state.chat_history.append({"role": "model", "parts": [cache[cache_key]]})
+            log_debug_message(f"Antwort aus dem Cache geladen für Aktion: {player_action}")
             return
 
         st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
 
         if player_action == "Kampf":
             st.session_state.random_events = calculate_random_events()
-            # Debug-Ausgabe der zufälligen Ereignisse
-            st.session_state.debug_random_events = st.session_state.random_events
+            log_debug_message("Zufällige Ereignisse berechnet.")
+            for event, occurred in st.session_state.random_events.items():
+                log_debug_message(f"{event}: {'Ja' if occurred else 'Nein'}")
 
         gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
                                        generation_config=generation_config,
@@ -92,7 +102,9 @@ def handle_player_action():
             st.session_state.response_text = response.text
             st.session_state.chat_history.append({"role": "model", "parts": [response.text]})
             cache[cache_key] = response.text
+            log_debug_message("Antwort von Gemini erhalten.")
         else:
             st.session_state.response_text = "No output from Gemini."
+            log_debug_message("Fehler beim Empfangen der Antwort von Gemini.")
 
         st.session_state.selected_option = ""
