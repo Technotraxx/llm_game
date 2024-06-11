@@ -32,11 +32,6 @@ def display_response():
         st.subheader("Reaktion:")
         st.write(st.session_state.response_text)
 
-    if st.session_state.selected_option in ["Kampf", "Hilfe leisten", "Verhandeln"] and st.session_state.random_events:
-        st.subheader("Zufällige Ereignisse (Debug):")
-        for event, occurred in st.session_state.random_events.items():
-            st.write(f"{event}: {'Ja' if occurred else 'Nein'}")
-
 def display_debug_log():
     st.sidebar.subheader("Debug Log")
     st.sidebar.text_area("Log", st.session_state.debug_log, height=300)
