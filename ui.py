@@ -2,7 +2,7 @@
 
 import streamlit as st
 from character import display_character
-from game_logic import start_encounter, handle_player_action, log_debug_message
+from game_logic import start_encounter, handle_player_action
 
 def display_encounter():
     st.subheader("Begegnung")
@@ -32,7 +32,7 @@ def display_response():
         st.subheader("Reaktion:")
         st.write(st.session_state.response_text)
 
-    if st.session_state.selected_option == "Kampf" and st.session_state.random_events:
+    if st.session_state.selected_option in ["Kampf", "Hilfe leisten", "Verhandeln"] and st.session_state.random_events:
         st.subheader("Zufällige Ereignisse (Debug):")
         for event, occurred in st.session_state.random_events.items():
             st.write(f"{event}: {'Ja' if occurred else 'Nein'}")
@@ -40,7 +40,3 @@ def display_response():
 def display_debug_log():
     st.sidebar.subheader("Debug Log")
     st.sidebar.text_area("Log", st.session_state.debug_log, height=300)
-
-def update_debug_log():
-    log_debug_message("Aktualisiere Debug-Log")
-    display_debug_log()
