@@ -93,4 +93,9 @@ def handle_player_action():
         else:
             st.session_state.response_text = "No output from Gemini."
 
+        # Debug-Ausgabe der zufälligen Ereignisse
+        st.write("Zufällige Ereignisse:")
+        for event, occurred in st.session_state.random_events.items():
+            st.write(f"{event}: {'Ja' if occurred else 'Nein'}")
+
         st.session_state.selected_option = ""
