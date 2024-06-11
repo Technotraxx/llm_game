@@ -4,7 +4,7 @@ import google.generativeai as genai
 import diskcache as dc
 import streamlit as st
 from config import generation_config
-from prompts import system_prompt_encounter, system_prompt_action, get_encounter_prompt
+from prompts import system_prompt_encounter, system_prompt_action, get_encounter_prompt, random_events_prompt
 from mechanics import calculate_random_events
 
 cache = dc.Cache("cache_dir")
@@ -24,6 +24,8 @@ def initialize_game_state():
         st.session_state.random_events = {}
     if 'debug_log' not in st.session_state:
         st.session_state.debug_log = ""
+    if 'character' not in st.session_state:
+        st.session_state.character = {"Name": "Abenteurer", "Level": 1, "Gesundheit": 100, "Mana": 50, "Erfahrung": 0, "Gold": 10}
 
 def log_debug_message(message):
     st.session_state.debug_log += f"{message}\n"
@@ -77,28 +79,37 @@ def handle_player_action():
         player_action = st.session_state.selected_option
         user_message = f"Der Spieler hat sich entschieden für {player_action}"
 
-        cache_key = f"response_{user_message}"
-        if cache_key in cache:
-            response_text = cache[cache_key]
-            st.session_state.response_text = response_text
-            st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
-            st.session_state.chat_history.append({"role": "model", "parts": [response_text]})
-            log_debug_message(f"Antwort aus dem Cache geladen für Aktion: {player_action}")
-            return
-
-        st.session_state.chat_history.append({"role": "user", "parts": [user_message]})
-
         # Berechnung der zufälligen Ereignisse
         st.session_state.random_events = calculate_random_events(player_action)
         log_debug_message("Zufällige Ereignisse berechnet:")
         for event, occurred in st.session_state.random_events.items():
             log_debug_message(f"{event}: {'Ja' if occurred else 'Nein'}")
+        
+        # Erfahrung erhöhen, wenn das Event "Erfahrung" ausgelöst wurde
+        if st.session_state.random_events.get("Erfahrung", False):
+            st.session_state.character["Erfahrung"] += 1
+            log_debug_message("Erfahrungspunkte des Helden wurden um 1 erhöht.")
+
+        # Prompt für LLM erstellen
+        random_events_details = "\n".join([f"{event}: {'Ja' if occurred else 'Nein'}" for event, occurred in st.session_state.random_events.items()])
+        user_message_with_events = f"{user_message}\n\n{random_events_prompt}\n\n{random_events_details}"
+
+        cache_key = f"response_{user_message_with_events}"
+        if cache_key in cache:
+            response_text = cache[cache_key]
+            st.session_state.response_text = response_text
+            st.session_state.chat_history.append({"role": "user", "parts": [user_message_with_events]})
+            st.session_state.chat_history.append({"role": "model", "parts": [response_text]})
+            log_debug_message(f"Antwort aus dem Cache geladen für Aktion: {player_action}")
+            return
+
+        st.session_state.chat_history.append({"role": "user", "parts": [user_message_with_events]})
 
         gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
                                        generation_config=generation_config,
                                        system_instruction=system_prompt_action)
         chat_session = gemini.start_chat(history=st.session_state.chat_history)
-        response = chat_session.send_message(user_message)
+        response = chat_session.send_message(user_message_with_events)
 
         if response.text:
             st.session_state.response_text = response.text
