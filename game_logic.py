@@ -79,6 +79,8 @@ def handle_player_action():
 
         if player_action == "Kampf":
             st.session_state.random_events = calculate_random_events()
+            # Debug-Ausgabe der zufälligen Ereignisse
+            st.session_state.debug_random_events = st.session_state.random_events
 
         gemini = genai.GenerativeModel(model_name="gemini-1.5-flash",
                                        generation_config=generation_config,
@@ -92,10 +94,5 @@ def handle_player_action():
             cache[cache_key] = response.text
         else:
             st.session_state.response_text = "No output from Gemini."
-
-        # Debug-Ausgabe der zufälligen Ereignisse
-        st.write("Zufällige Ereignisse:")
-        for event, occurred in st.session_state.random_events.items():
-            st.write(f"{event}: {'Ja' if occurred else 'Nein'}")
 
         st.session_state.selected_option = ""
