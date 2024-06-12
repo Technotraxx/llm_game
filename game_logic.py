@@ -25,7 +25,20 @@ def initialize_game_state():
     if 'debug_log' not in st.session_state:
         st.session_state.debug_log = ""
     if 'character' not in st.session_state:
-        st.session_state.character = {"Name": "Abenteurer", "Level": 1, "Gesundheit": 100, "Mana": 50, "Erfahrung": 0, "Gold": 10}
+        st.session_state.character = {
+            "Name": "Abenteurer",
+            "Level": 1,
+            "Gesundheit": 100,
+            "Mana": 50,
+            "Erfahrung": 0,
+            "Gold": 10,
+            "Stärke": 10,
+            "Geschicklichkeit": 10,
+            "Intelligenz": 10,
+            "Charisma": 10,
+            "Verstand": 10,
+            "Willenskraft": 10
+        }
 
 def log_debug_message(message):
     st.session_state.debug_log += f"{message}\n"
