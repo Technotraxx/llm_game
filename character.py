@@ -33,3 +33,6 @@ def display_character():
     st.sidebar.text(f"Charisma: {st.session_state.character['Charisma']}")
     st.sidebar.text(f"Verstand: {st.session_state.character['Verstand']}")
     st.sidebar.text(f"Willenskraft: {st.session_state.character['Willenskraft']}")
+
+    # Debugging-Zeile hinzufügen
+    st.sidebar.text(f"Charakter Zustand: {st.session_state.character}")
