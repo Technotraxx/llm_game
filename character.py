@@ -35,4 +35,4 @@ def display_character():
     st.sidebar.text(f"Willenskraft: {st.session_state.character['Willenskraft']}")
 
     # Debugging-Zeile hinzufügen
-    st.sidebar.text(f"Charakter Zustand: {st.session_state.character}")
+    st.session_state.debug_log += f"Charakter Zustand: {st.session_state.character}\n"
