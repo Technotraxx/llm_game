@@ -20,19 +20,24 @@ def initialize_character():
         }
 
 def display_character():
-    st.sidebar.subheader("Charakter")
-    st.sidebar.text(f"Name: {st.session_state.character['Name']}")
-    st.sidebar.text(f"Level: {st.session_state.character['Level']}")
-    st.sidebar.text(f"Gesundheit: {st.session_state.character['Gesundheit']}")
-    st.sidebar.text(f"Mana: {st.session_state.character['Mana']}")
-    st.sidebar.text(f"Erfahrung: {st.session_state.character['Erfahrung']}")
-    st.sidebar.text(f"Gold: {st.session_state.character['Gold']}")
-    st.sidebar.text(f"Stärke: {st.session_state.character['Stärke']}")
-    st.sidebar.text(f"Geschicklichkeit: {st.session_state.character['Geschicklichkeit']}")
-    st.sidebar.text(f"Intelligenz: {st.session_state.character['Intelligenz']}")
-    st.sidebar.text(f"Charisma: {st.session_state.character['Charisma']}")
-    st.sidebar.text(f"Verstand: {st.session_state.character['Verstand']}")
-    st.sidebar.text(f"Willenskraft: {st.session_state.character['Willenskraft']}")
+    character = st.session_state.character
 
-    # Debugging-Zeile hinzufügen
-    st.session_state.debug_log += f"Charakter Zustand: {st.session_state.character}\n"
+    character_html = f"""
+    <div style="background-color:#f2f2f2;padding:10px;border-radius:10px;">
+        <h3 style="text-align:center;">Charakter</h3>
+        <p><strong>Name:</strong> {character['Name']}</p>
+        <p><strong>Level:</strong> {character['Level']}</p>
+        <p><strong>Gesundheit:</strong> {character['Gesundheit']}</p>
+        <p><strong>Mana:</strong> {character['Mana']}</p>
+        <p><strong>Erfahrung:</strong> {character['Erfahrung']}</p>
+        <p><strong>Gold:</strong> {character['Gold']}</p>
+        <h4 style="text-align:center;">Eigenschaften</h4>
+        <p><strong>Stärke:</strong> {character['Stärke']}</p>
+        <p><strong>Geschicklichkeit:</strong> {character['Geschicklichkeit']}</p>
+        <p><strong>Intelligenz:</strong> {character['Intelligenz']}</p>
+        <p><strong>Charisma:</strong> {character['Charisma']}</p>
+        <p><strong>Verstand:</strong> {character['Verstand']}</p>
+        <p><strong>Willenskraft:</strong> {character['Willenskraft']}</p>
+    </div>
+    """
+    st.sidebar.markdown(character_html, unsafe_allow_html=True)
